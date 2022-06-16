@@ -1,0 +1,94 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="{% static 'main/styles.css' %}">
+</head>
+<body>
+    {% for farm in data %}
+        <h2>
+            {{farm.name}}
+            {% if farm.last_request_warning %}
+                SOMETHING WRONG                           
+            {% endif %}
+        </h2>
+        <h3>
+            Total farm hashrates:
+            {% for h in farm.hashrates_by_coin %}
+                [{{h.coin}}] {{h.algo}} {{h.hashrate}};
+            {% endfor %}
+        </h3>
+
+        <details>
+            <summary>Detailed View</summary>
+
+            <table class="farm-table">
+                <thead>
+                  <tr>
+                    <th>Rig Name</th>
+                    <th>Status</th>
+                    <th>Last request</th>
+                    <th>Algo</th>
+                    <th>Coin</th>
+                    <th>Pool</th>
+                    <th>Login \ Wallet</th>
+                    <th>Troubles</th>
+                    <th>Hashrate</th>
+                    <th>Conf_Name</th>
+                  </tr>
+                </thead>
+                <tbody>
+                    {% for rig in farm.rigs %}
+                        <tr>
+                            <td>{{rig.name}}</td>
+                            <td>
+                                {% if rig.stats.online %}
+                                    On
+                                {% else %} 
+                                    Off
+                                {% endif %}
+                            </td>
+                            <td>{{rig.last_request}}</td>
+                            <td>
+                                {% for hrate in rig.miners_summary.hashrates %}
+                                    {{hrate.algo}};
+                                {% endfor %}
+                            </td>
+                            <td>
+                                {% for hrate in rig.miners_summary.hashrates %}
+                                    {{hrate.coin}};
+                                {% endfor %}
+                            </td>
+                            <td>
+                                {{rig.pools}};
+                            </td>
+                            <td>
+                                {{rig.wallets}};
+                            </td>
+                            <td>
+                                {% if rig.last_request_warning %}
+                                    NO REQUESTS                                    
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% for hs_sum in rig.hashrate_sum%}
+                                    {{hs_sum.algo}}: {{hs_sum.hashrate_sum}};
+                                {% endfor %}
+                            </td>
+                            <td>
+                                {{rig.config_type}}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </details>
+        <br>
+    {% endfor %}
+</body>
+</html>

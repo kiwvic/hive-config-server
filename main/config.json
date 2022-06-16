@@ -1,0 +1,7 @@
+{
+    "last_request_warning_time": 10, 
+    "configs": {
+        "https://hive-test-viktor.s3.eu-west-2.amazonaws.com/config.csv": "default",
+        "https://gekeafknfnjasfnasfasfas/config.csv": "low"
+    }
+}
