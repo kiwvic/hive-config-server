@@ -15,3 +15,9 @@
 
 #### remove all data from tables:
 `python manage.py flush`
+
+# Setup
+1. In 'main' dir create .env file by .env.example
+2. Configure 'main/config.json'
+3. Init database
+4. Run server
