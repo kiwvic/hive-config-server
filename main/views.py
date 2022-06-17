@@ -10,6 +10,7 @@ from json import load
 utc=pytz.UTC
 __CONFIG_FILE = load(open("./main/config.json"))
 LAST_REQUEST_WARNING_TIME = timedelta(minutes=__CONFIG_FILE["last_request_warning_time"])
+REMOVE_FROM_TABLE_TIME = timedelta(minutes=__CONFIG_FILE["remove_from_table_time"])
 
 
 def index(req):
@@ -48,6 +49,7 @@ def index(req):
         
     elif req.method == "GET":
         farms_data = get_farms_info()
+        __remove_inactive(farms_data)  # TODO add scheduled task
 
         for farm in farms_data["data"]:
             if "hashrates_by_coin" in farm:
@@ -91,3 +93,22 @@ def index(req):
                     
                     rig["config_type"] = __CONFIG_FILE["configs"][rig_object.config_url]
         return render(req, 'main/index.html', farms_data)
+
+
+def __get_inactive_rigs():
+    return Rig.objects.filter(last_request__lte=utc.localize(datetime.now())- REMOVE_FROM_TABLE_TIME)
+
+def __remove_inactive(farms_data):
+    rigs_to_remove = __get_inactive_rigs()
+    if rigs_to_remove:
+        farms_local = [i.farm_id for i in rigs_to_remove]
+        farms_actual = [i.farm_id for i in farms_data]
+        farms_to_remove = set(farms_local) ^ set(farms_actual)
+
+        for farm_id in farms_to_remove:
+            Farm.objects.get(id=farm_id).delete()
+        
+        rigs_to_remove = __get_inactive_rigs()
+        if rigs_to_remove:
+            for rig in rigs_to_remove:
+                rig.delete()
