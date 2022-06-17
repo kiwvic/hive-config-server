@@ -100,15 +100,23 @@ def __get_inactive_rigs():
 
 def __remove_inactive(farms_data):
     rigs_to_remove = __get_inactive_rigs()
-    if rigs_to_remove:
-        farms_local = [i.farm_id for i in rigs_to_remove]
-        farms_actual = [i.farm_id for i in farms_data]
-        farms_to_remove = set(farms_local) ^ set(farms_actual)
 
-        for farm_id in farms_to_remove:
-            Farm.objects.get(id=farm_id).delete()
+    if rigs_to_remove:
+        actual_data = dict()
+        for farm in farms_data["data"]:
+            actual_rigs = [i["id"] for i in get_rigs_info(farm["id"])["data"]]
+            actual_data[farm["id"]] = actual_rigs
+
+        farms_local = [i.farm_id.id for i in rigs_to_remove]
+        farms_to_remove = set(farms_local).difference(set(actual_data.keys()))
+
+        if farms_to_remove:
+            for farm_id in farms_to_remove:
+                if farm_id not in actual_data:
+                    Farm.objects.get(id=farm_id).delete()
+            rigs_to_remove = __get_inactive_rigs()
         
-        rigs_to_remove = __get_inactive_rigs()
         if rigs_to_remove:
             for rig in rigs_to_remove:
-                rig.delete()
+                if rig.id not in actual_data[rig.farm_id.id]:
+                    rig.delete()
