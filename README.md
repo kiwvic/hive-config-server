@@ -21,4 +21,5 @@
 2. Configure 'main/config.json'
 3. install dependencies: ```pip install -r requirements.txt```
 4. Init database
-5. Run server
+5. ```chmod +x runserver.sh```
+6. ```./runserver.sh```
