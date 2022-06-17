@@ -14,7 +14,7 @@
         <h2>
             {{farm.name}}
             {% if farm.last_request_warning %}
-                SOMETHING WRONG                           
+                NO REQUESTS                       
             {% endif %}
         </h2>
         <h3>
@@ -65,10 +65,10 @@
                                 {% endfor %}
                             </td>
                             <td>
-                                {{rig.pools}};
+                                {{rig.pools}}
                             </td>
                             <td>
-                                {{rig.wallets}};
+                                {{rig.wallets}}
                             </td>
                             <td>
                                 {% if rig.last_request_warning %}

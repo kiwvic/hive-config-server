@@ -44,8 +44,8 @@ def index(req):
             )
         rig_obj.save()
 
-
         return HttpResponse(status=200)
+        
     elif req.method == "GET":
         farms_data = get_farms_info()
 
@@ -78,9 +78,9 @@ def index(req):
                     rig["last_request"] = rig_object.last_request
                     rig["last_request_warning"] = (utc.localize(datetime.now()) - rig_object.last_request) > LAST_REQUEST_WARNING_TIME            
 
-                    rig["pools"] = rig_object.pools
+                    rig["pools"] = ";\n".join(rig_object.pools.split())
 
-                    rig["wallets"] = rig_object.wallets
+                    rig["wallets"] = ";\n".join(rig_object.wallets.split())
 
                     # will display text after farm name if last_request_warning
                     if rig["last_request_warning"] and "last_request_warning" in farm:
