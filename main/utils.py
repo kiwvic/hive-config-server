@@ -38,10 +38,10 @@ def get_client_ip(request):
 def hash_convert(kh: int) -> str:
     # ternary for prettier output (remove .0 if number is integer)
     if kh // 1000_000_000:
-        return f"{kh / 1000_000_000}Th"
+        return f"{(kh / 1000_000_000):.{1}f}Th"
     elif kh // 1000_000:
-        return f"{kh / 1000_000}Gh"
+        return f"{(kh / 1000_000):.{1}f}Gh"
     elif kh // 1000:
-        return f"{kh / 1000}Mh"
+        return f"{(kh / 1000):.{1}f}Mh"
     else:
         return f"{kh}kh"

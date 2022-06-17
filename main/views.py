@@ -6,9 +6,11 @@ from .models import Farm, Rig
 import pytz
 from json import load
 
+
 utc=pytz.UTC
 __CONFIG_FILE = load(open("./main/config.json"))
 LAST_REQUEST_WARNING_TIME = timedelta(minutes=__CONFIG_FILE["last_request_warning_time"])
+
 
 def index(req):
     if req.method == "POST":
@@ -48,39 +50,44 @@ def index(req):
         farms_data = get_farms_info()
 
         for farm in farms_data["data"]:
-            farm["rigs"] = get_rigs_info(farm["id"])["data"]
+            if "hashrates_by_coin" in farm:
+                farm["hashrates_by_coin_copy"] = farm["hashrates_by_coin"].copy()
+                for h in farm["hashrates_by_coin_copy"]:
+                    h["hashrate"] = hash_convert(h["hashrate"])
 
-            for rig in farm["rigs"]:
-                rig_algos = []
-                rig_hashrate_sum = []
+                farm["rigs"] = get_rigs_info(farm["id"])["data"]
 
-                try:
-                    rig_object = Rig.objects.get(id=rig["id"])
-                except:
-                    continue
+            if "rigs" in farm:
+                for rig in farm["rigs"]:
+                    rig_algos = []
+                    rig_hashrate_sum = []
 
-                # hashrate column
-                if "miners_stats" in rig:
-                    for hs in rig["miners_stats"]["hashrates"]:
-                        rig_algos.append(hs["algo"])
-                        rig_hashrate_sum.append(hash_convert(sum(hs["hashes"])))
-                    rig["hashrate_sum"] = [{"algo": algo, "hashrate_sum": int(s)} for algo, s in zip(rig_algos, rig_hashrate_sum)]
+                    try:
+                        rig_object = Rig.objects.get(id=rig["id"])
+                    except:
+                        continue
 
-                # warning if rig did not make requests in LAST_REQUEST_WARNING_TIME
-                rig["last_request"] = rig_object.last_request
-                rig["last_request_warning"] = (utc.localize(datetime.now()) - rig_object.last_request) > LAST_REQUEST_WARNING_TIME            
+                    # hashrate column
+                    if "miners_stats" in rig:
+                        for hs in rig["miners_stats"]["hashrates"]:
+                            rig_algos.append(hs["algo"])
+                            rig_hashrate_sum.append(hash_convert(sum(hs["hashes"])))
+                        rig["hashrate_sum"] = [{"algo": algo, "hashrate_sum": s} for algo, s in zip(rig_algos, rig_hashrate_sum)]
 
-                rig["pools"] = rig_object.pools
+                    # warning if rig did not make requests in LAST_REQUEST_WARNING_TIME
+                    rig["last_request"] = rig_object.last_request
+                    rig["last_request_warning"] = (utc.localize(datetime.now()) - rig_object.last_request) > LAST_REQUEST_WARNING_TIME            
 
-                rig["wallets"] = rig_object.wallets
+                    rig["pools"] = rig_object.pools
 
-                # will display text after farm name if last_request_warning
-                if rig["last_request_warning"] and "last_request_warning" in farm:
-                    if not farm["last_request_warning"]:
-                        farm["last_request_warning"] = True
-                else:
-                    farm["last_request_warning"] = rig["last_request_warning"]
-                
-                rig["config_type"] = __CONFIG_FILE["configs"][rig_object.config_url]
+                    rig["wallets"] = rig_object.wallets
 
+                    # will display text after farm name if last_request_warning
+                    if rig["last_request_warning"] and "last_request_warning" in farm:
+                        if not farm["last_request_warning"]:
+                            farm["last_request_warning"] = True
+                    else:
+                        farm["last_request_warning"] = rig["last_request_warning"]
+                    
+                    rig["config_type"] = __CONFIG_FILE["configs"][rig_object.config_url]
         return render(req, 'main/index.html', farms_data)
