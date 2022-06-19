@@ -19,7 +19,7 @@
         </h2>
         <h3>
             Total farm hashrates:
-            {% for h in farm.hashrates_by_coin_copy %}
+            {% for h in farm.hashrates_by_coin %}
                 [{{h.coin}}] {{h.algo}} {{h.hashrate}};
             {% endfor %}
         </h3>
