@@ -24,7 +24,7 @@ def index(req):
             if "remote_address" in r:
                 rig_ips.append(r["remote_address"]["ip"])
         
-        if get_client_ip(req) not in rig_ips:
+        if not sender_is_rig(req, int(farm_id)):
             return HttpResponse(status=404)
 
         farm_object, _ = Farm.objects.get_or_create(id=int(farm_id))

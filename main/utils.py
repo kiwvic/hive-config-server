@@ -29,13 +29,22 @@ def get_rigs_info(farm_id: int) -> dict:
     url = f"https://api2.hiveos.farm/api/v2/farms/{farm_id}/workers"
     return __get_info(url)
 
-def get_client_ip(request):
+def __get_client_ip(request):
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     if x_forwarded_for:
         ip = x_forwarded_for.split(',')[0]
     else:
         ip = request.META.get('REMOTE_ADDR')
     return ip
+
+def sender_is_rig(request, farm_id):
+    rig_ips = []
+    for r in get_rigs_info(int(farm_id))["data"]:
+        if "remote_address" in r:
+            rig_ips.append(r["remote_address"]["ip"])
+    
+    return __get_client_ip(request) in rig_ips
+
 
 def hash_convert(kh: int) -> str:
     # ternary for prettier output (remove .0 if number is integer)
