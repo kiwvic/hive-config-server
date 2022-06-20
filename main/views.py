@@ -1,6 +1,5 @@
 import pytz
 import asyncio
-from dotenv import load_dotenv
 from .utils import *
 from datetime import datetime, timedelta
 from django.shortcuts import render
@@ -18,12 +17,6 @@ def index(req):
     if req.method == "POST":
         farm_id, rig_id, pools, wallets, config_url = req.body.decode("utf-8").split(",")
 
-        # sender is an actual rig?
-        rig_ips = []
-        for r in get_rigs_info(int(farm_id))["data"]:
-            if "remote_address" in r:
-                rig_ips.append(r["remote_address"]["ip"])
-        
         if not sender_is_rig(req, int(farm_id)):
             return HttpResponse(status=404)
 
