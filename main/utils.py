@@ -29,6 +29,7 @@ def get_rigs_info(farm_id: int) -> dict:
     url = f"https://api2.hiveos.farm/api/v2/farms/{farm_id}/workers"
     return __get_info(url)
 
+
 def __get_client_ip(request):
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     if x_forwarded_for:

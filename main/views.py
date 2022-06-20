@@ -46,7 +46,7 @@ def index(req):
 
         asyncio.run(add_rigs_to_farms(farms_data))
 
-        # __remove_inactive(farms_data)  # TODO add scheduled task
+        __remove_inactive(farms_data)  # TODO add scheduled task
 
         for farm in farms_data["data"]:
             if "hashrates_by_coin" in farm:
@@ -97,8 +97,7 @@ def __remove_inactive(farms_data):
     if rigs_to_remove:
         actual_data = dict()
         for farm in farms_data["data"]:
-            actual_rigs = [i["id"] for i in get_rigs_info(farm["id"])["data"]]
-            actual_data[farm["id"]] = actual_rigs
+            actual_data[farm["id"]] = [i["id"] for i in farm["rigs"]]
 
         farms_local = [i.farm_id.id for i in rigs_to_remove]
         farms_to_remove = set(farms_local).difference(set(actual_data.keys()))
