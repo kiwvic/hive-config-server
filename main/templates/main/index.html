@@ -7,7 +7,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <link rel="stylesheet" href="{% static 'main/styles.css' %}">
+    <style>
+        table {border-collapse: collapse;}
+        th, td {
+            width:150px;
+            text-align:center;
+            border:1px solid black;
+            padding:5px
+        }
+    </style>
 </head>
 <body>
     {% for farm in data %}
