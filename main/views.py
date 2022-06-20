@@ -1,11 +1,12 @@
-from .utils import get_farms_info, get_rigs_info, get_client_ip, hash_convert
+import pytz
+import asyncio
+from dotenv import load_dotenv
+from .utils import *
 from datetime import datetime, timedelta
 from django.shortcuts import render
 from django.http import HttpResponse
 from .models import Farm, Rig
-import pytz
 from json import load
-
 
 utc=pytz.UTC
 __CONFIG_FILE = load(open("./main/config.json"))
@@ -49,14 +50,15 @@ def index(req):
         
     elif req.method == "GET":
         farms_data = get_farms_info()
-        __remove_inactive(farms_data)  # TODO add scheduled task
+
+        asyncio.run(add_rigs_to_farms(farms_data))
+
+        # __remove_inactive(farms_data)  # TODO add scheduled task
 
         for farm in farms_data["data"]:
             if "hashrates_by_coin" in farm:
                 for h in farm["hashrates_by_coin"]:
                     h["hashrate"] = hash_convert(h["hashrate"])
-
-            farm["rigs"] = get_rigs_info(farm["id"])["data"]
             
             for rig in farm["rigs"]:
                 rig_algos = []

@@ -2,6 +2,8 @@ from dotenv import load_dotenv
 import os
 import urllib3
 import json
+import asyncio
+import aiohttp
 
 load_dotenv()
 __HIVE_TOKEN = os.getenv("HIVE_TOKEN")
@@ -45,3 +47,22 @@ def hash_convert(kh: int) -> str:
         return f"{(kh / 1000):.{1}f}Mh"
     else:
         return f"{kh}kh"
+
+
+async def __add_rig_to_farm(session, url, farm):
+    headers = {
+        "Authorization": f"Bearer {__HIVE_TOKEN}",
+        "accept": "application/json"
+    }
+
+    async with session.get(url, headers=headers) as r:
+        farm["rigs"] = (await r.json())["data"]
+
+async def add_rigs_to_farms(farms):
+    async with aiohttp.ClientSession() as session:
+        tasks = []
+        for farm in farms["data"]:
+            url = f"https://api2.hiveos.farm/api/v2/farms/{farm['id']}/workers"
+            tasks.append(asyncio.ensure_future(__add_rig_to_farm(session, url, farm)))
+        
+        await asyncio.gather(*tasks)
