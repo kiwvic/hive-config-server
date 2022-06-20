@@ -1,11 +1,12 @@
 from dotenv import load_dotenv
+from django.conf import settings
 import os
 import urllib3
 import json
 import asyncio
 import aiohttp
 
-load_dotenv()
+load_dotenv(str(settings.BASE_DIR) + "/.env")
 __HIVE_TOKEN = os.getenv("HIVE_TOKEN")
 
 
