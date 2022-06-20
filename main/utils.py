@@ -49,7 +49,6 @@ def sender_is_rig(request, farm_id):
 
 
 def hash_convert(kh: int) -> str:
-    # ternary for prettier output (remove .0 if number is integer)
     if kh // 1000_000_000:
         return f"{(kh / 1000_000_000):.{1}f}Th"
     elif kh // 1000_000:
