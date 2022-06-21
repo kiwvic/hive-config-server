@@ -10,7 +10,8 @@
     <style>
         table {border-collapse: collapse;}
         th, td {
-            width:150px;
+			table-layout: auto;
+            width:210px;
             text-align:center;
             border:1px solid black;
             padding:5px
@@ -18,6 +19,26 @@
     </style>
 </head>
 <body>
+	<center>
+	<h2>JetHash Farm Monitoring v.1</h2>
+    <table>
+        <thead>
+            <tr>
+                {% for i in all_hashrates %}
+                    <th>{{i.algo}}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                {% for i in all_hashrates %}
+                    <td>{{i.hashrate}}</td>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
+	</center>
+	<center>
     {% for farm in data %}
         <h2>
             {{farm.name}}
@@ -56,12 +77,14 @@
                             <td>{{rig.name}}</td>
                             <td>
                                 {% if rig.stats.online %}
-                                    On
+                                    <font color = "green">On</font>
                                 {% else %} 
-                                    Off
+                                    <font color = "red">Off</font>
                                 {% endif %}
                             </td>
-                            <td>{{rig.last_request}}</td>
+                            <td>
+								{{rig.last_request}}
+							</td>
                             <td>
                                 {% for hrate in rig.miners_summary.hashrates %}
                                     {{hrate.algo}};
@@ -80,7 +103,7 @@
                             </td>
                             <td>
                                 {% if rig.last_request_warning %}
-                                    NO REQUESTS                                    
+                                    <font color = "red">NO REQUESTS</font>                                    
                                 {% endif %}
                             </td>
                             <td>
@@ -98,5 +121,6 @@
         </details>
         <br>
     {% endfor %}
+	</center>
 </body>
 </html>

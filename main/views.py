@@ -48,7 +48,15 @@ def index(req):
 
         __remove_inactive(farms_data)  # TODO add scheduled task
 
+        all_hashrates = dict()
         for farm in farms_data["data"]:
+            if "hashrates" in farm:
+                for h in farm["hashrates"]:
+                    if h["algo"] in all_hashrates:
+                        all_hashrates[h["algo"]] = all_hashrates[h["algo"]] + h["hashrate"]
+                    else:
+                        all_hashrates[h["algo"]] = h["hashrate"]
+
             if "hashrates_by_coin" in farm:
                 for h in farm["hashrates_by_coin"]:
                     h["hashrate"] = hash_convert(h["hashrate"])
@@ -85,6 +93,11 @@ def index(req):
                     farm["last_request_warning"] = rig["last_request_warning"]
                 
                 rig["config_type"] = __CONFIG_FILE["configs"][rig_object.config_url]
+        
+        for h in all_hashrates:
+            all_hashrates[h] = hash_convert(all_hashrates[h])
+        farms_data["all_hashrates"] = [{"algo": i, "hashrate": j} for i, j in all_hashrates.items()]
+
         return render(req, 'main/index.html', farms_data)
 
 
@@ -112,3 +125,6 @@ def __remove_inactive(farms_data):
             for rig in rigs_to_remove:
                 if rig.id not in actual_data[rig.farm_id.id]:
                     rig.delete()
+
+def __add_all_hashes():
+    pass
