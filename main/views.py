@@ -79,7 +79,7 @@ def index(req):
 
                 # warning if rig did not make requests in LAST_REQUEST_WARNING_TIME
                 rig["last_request"] = rig_object.last_request
-                rig["last_request_warning"] = (utc.localize(datetime.now()) - rig_object.last_request) > LAST_REQUEST_WARNING_TIME            
+                rig["last_request_warning"] = (utc.localize(datetime.now()) - rig_object.last_request) > LAST_REQUEST_WARNING_TIME and rig["stats"]["online"]
 
                 rig["pools"] = ";\n".join(rig_object.pools.split())
 
@@ -125,6 +125,3 @@ def __remove_inactive(farms_data):
             for rig in rigs_to_remove:
                 if rig.id not in actual_data[rig.farm_id.id]:
                     rig.delete()
-
-def __add_all_hashes():
-    pass
