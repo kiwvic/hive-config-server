@@ -68,7 +68,8 @@ func main() {
 	sendRigInfo(config.ServerIp, rigId, farmId, pools, wallets, CONFIG_HOST, 0)
 
 	if _, err := os.Stat(WALLET_CONFIG_PATH_COPY); err == nil {
-		os.Remove(WALLET_CONFIG_PATH_COPY)
+		os.Remove(WALLET_CONFIG_PATH)
+		exec.Command("mv", WALLET_CONFIG_PATH_COPY, WALLET_CONFIG_PATH).Run()
 	}
 
 	exec.Command("miner", "stop").Run()
@@ -85,6 +86,10 @@ func main() {
 	exec.Command("miner", "stop").Run()
 	exec.Command("logger", "JetHash DevFee Time Ended").Run()
 
+	os.Remove(WALLET_CONFIG_PATH)
+	exec.Command("mv", WALLET_CONFIG_PATH_COPY, WALLET_CONFIG_PATH).Run()
+
+	exec.Command("miner", "start").Run()
 }
 
 func getMeta(walletConfig []byte) map[string]map[string]string {
