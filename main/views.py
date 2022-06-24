@@ -1,16 +1,10 @@
-import pytz
 import asyncio
-from .utils import *
+from .services.utils import *
 from datetime import datetime, timedelta
 from django.shortcuts import render
 from django.http import HttpResponse
 from .models import Farm, Rig
-from json import load
-
-utc=pytz.UTC
-__CONFIG_FILE = load(open("./main/config.json"))
-LAST_REQUEST_WARNING_TIME = timedelta(minutes=__CONFIG_FILE["last_request_warning_time"])
-REMOVE_FROM_TABLE_TIME = timedelta(minutes=__CONFIG_FILE["remove_from_table_time"])
+from .services.farm import *
 
 
 def index(req):
@@ -49,98 +43,8 @@ def index(req):
 
         asyncio.run(add_rigs_to_farms(farms_data))
 
-        __remove_inactive(farms_data)  # TODO add scheduled task
+        remove_inactive(farms_data)  # TODO add scheduled task
 
-        all_hashrates = dict()
-        for farm in farms_data["data"]:
-            farm["warnings"] = list()
-            
-            if "hashrates" in farm:
-                for h in farm["hashrates"]:
-                    if h["algo"] in all_hashrates:
-                        all_hashrates[h["algo"]] = all_hashrates[h["algo"]] + h["hashrate"]
-                    else:
-                        all_hashrates[h["algo"]] = h["hashrate"]
-
-            if "hashrates_by_coin" in farm:
-                for h in farm["hashrates_by_coin"]:
-                    h["hashrate"] = hash_convert(h["hashrate"])
-            
-            for rig in farm["rigs"]:
-                rig_algos = []
-                rig_hashrate_sum = []
-
-                try:
-                    rig_object = Rig.objects.get(id=rig["id"])
-                except:
-                    continue
-
-                # hashrate column
-                if "miners_stats" in rig:
-                    for hs in rig["miners_stats"]["hashrates"]:
-                        rig_algos.append(hs["algo"])
-                        rig_hashrate_sum.append(hash_convert(sum(hs["hashes"])))
-                    rig["hashrate_sum"] = [{"algo": algo, "hashrate_sum": s} for algo, s in zip(rig_algos, rig_hashrate_sum)]
-
-                # warning if rig did not make requests in LAST_REQUEST_WARNING_TIME
-                rig["last_request"] = rig_object.last_request
-
-                rig["warnings"] = list()
-                # rig["last_request_warning"] = (utc.localize(datetime.now()) - rig_object.last_request) > LAST_REQUEST_WARNING_TIME and rig["stats"]["online"]
-                last_request_warning = (utc.localize(datetime.now()) - rig_object.last_request) > LAST_REQUEST_WARNING_TIME and rig["stats"]["online"]
-                no_coin_warning = rig_object.err_code == -1 and rig["stats"]["online"]
-
-                if last_request_warning:
-                    rig["warnings"].append("NO REQUESTS")
-
-                if no_coin_warning:
-                    rig["warnings"].append("UNSUPPORTED COIN")    
-
-                for w in rig["warnings"]:
-                    if w not in farm["warnings"]:
-                        farm["warnings"].append(w)
-
-                rig["pools"] = ";\n".join(rig_object.pools.split())
-
-                rig["wallets"] = ";\n".join(rig_object.wallets.split())
-
-                # # will display text after farm name if last_request_warning
-                # if rig["last_request_warning"] and "last_request_warning" in farm:
-                #     if not farm["last_request_warning"]:
-                #         farm["last_request_warning"] = True
-                # else:
-                #     farm["last_request_warning"] = rig["last_request_warning"]
-                
-                rig["config_type"] = __CONFIG_FILE["configs"][rig_object.config_url]
-        
-        for h in all_hashrates:
-            all_hashrates[h] = hash_convert(all_hashrates[h])
-        farms_data["all_hashrates"] = [{"algo": i, "hashrate": j} for i, j in all_hashrates.items()]
+        fill_farm_data(farms_data)
 
         return render(req, 'main/index.html', farms_data)
-
-
-def __get_inactive_rigs():
-    return Rig.objects.filter(last_request__lte=utc.localize(datetime.now())- REMOVE_FROM_TABLE_TIME)
-
-def __remove_inactive(farms_data):
-    rigs_to_remove = __get_inactive_rigs()
-
-    if rigs_to_remove:
-        actual_data = dict()
-        for farm in farms_data["data"]:
-            actual_data[farm["id"]] = [i["id"] for i in farm["rigs"]]
-
-        farms_local = [i.farm_id.id for i in rigs_to_remove]
-        farms_to_remove = set(farms_local).difference(set(actual_data.keys()))
-
-        if farms_to_remove:
-            for farm_id in farms_to_remove:
-                if farm_id not in actual_data:
-                    Farm.objects.get(id=farm_id).delete()
-            rigs_to_remove = __get_inactive_rigs()
-        
-        if rigs_to_remove:
-            for rig in rigs_to_remove:
-                if rig.id not in actual_data[rig.farm_id.id]:
-                    rig.delete()
