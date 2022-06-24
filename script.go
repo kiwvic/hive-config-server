@@ -65,8 +65,7 @@ func main() {
 		return
 	}
 
-	// TODO
-	sendRigInfo("http://127.0.0.1:8000", rigId, farmId, pools, wallets, CONFIG_HOST, 0)
+	sendRigInfo(config.ServerIp, rigId, farmId, pools, wallets, CONFIG_HOST, 0)
 
 	if _, err := os.Stat(WALLET_CONFIG_PATH_COPY); err == nil {
 		os.Remove(WALLET_CONFIG_PATH_COPY)
