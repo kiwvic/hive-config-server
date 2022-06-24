@@ -67,14 +67,11 @@ func main() {
 
 	sendRigInfo(config.ServerIp, rigId, farmId, pools, wallets, CONFIG_HOST, 0)
 
-	if _, err := os.Stat(WALLET_CONFIG_PATH_COPY); err == nil {
-		os.Remove(WALLET_CONFIG_PATH)
-		exec.Command("mv", WALLET_CONFIG_PATH_COPY, WALLET_CONFIG_PATH).Run()
-	}
-
 	exec.Command("miner", "stop").Run()
 
-	exec.Command("cp", WALLET_CONFIG_PATH, WALLET_CONFIG_PATH_COPY).Run()
+	if _, err := os.Stat(WALLET_CONFIG_PATH_COPY); err != nil {
+		exec.Command("cp", WALLET_CONFIG_PATH, WALLET_CONFIG_PATH_COPY).Run()
+	}
 
 	replaceWalletInConfig(config, meta)
 
