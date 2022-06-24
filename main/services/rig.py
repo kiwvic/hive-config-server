@@ -48,4 +48,5 @@ def add_wallets(rig, rig_object):
     rig["wallets"] = ";\n".join(rig_object.wallets.split())
 
 def add_config_type(rig, rig_object):
-    rig["config_type"] = __CONFIG_FILE["configs"][rig_object.config_url]
+    if str(rig_object.config_url) in __CONFIG_FILE["configs"]:
+        rig["config_type"] = __CONFIG_FILE["configs"][rig_object.config_url]
