@@ -23,6 +23,13 @@ const (
 	WALLET_CONFIG_PATH_COPY = "walletcopy.conf"
 )
 
+const ( // (-1) NO_REQUESTS occurs on server
+	NO_COIN = -(iota + 2)
+	ALGT5
+	MAINT_MODE
+	MINER_TURNED_OFF
+)
+
 type Config struct {
 	WorkTime int
 	ServerIp string
@@ -58,6 +65,7 @@ func main() {
 		return
 	}
 
+	// TODO
 	sendRigInfo("http://127.0.0.1:8000", rigId, farmId, pools, wallets, CONFIG_HOST, 0)
 
 	if _, err := os.Stat(WALLET_CONFIG_PATH_COPY); err == nil {
@@ -162,7 +170,7 @@ func getPools(walletConfig []byte) []string {
 	return pools
 }
 
-func replaceWalletInConfig(config Config, coins map[string]map[string]string) { // TODO PHOENIX...
+func replaceWalletInConfig(config Config, coins map[string]map[string]string) {
 	file, _ := ioutil.ReadFile(WALLET_CONFIG_PATH)
 	lines := s.Split(string(file), "\n")
 
@@ -262,25 +270,25 @@ func getConfig() Config {
 
 func getStartupProblem(config Config, walletConfig []byte, rigConf []byte) int {
 	if haveNotSupportedCoins(config.Wallet, getMeta(walletConfig)) {
-		return -1
+		return NO_COIN
 	}
 
-	if loadAverageGT5() {
-		return -2
+	if averageLoadGT5() {
+		return ALGT5
 	}
 
 	if maintenanceModeTurnedOn(rigConf) {
-		return -3
+		return MAINT_MODE
 	}
 
 	if minerTurnedOff(rigConf) {
-		return -4
+		return MINER_TURNED_OFF
 	}
 
 	return 0
 }
 
-func loadAverageGT5() bool {
+func averageLoadGT5() bool {
 	res, _ := exec.Command("cat", "/proc/loadavg").Output()
 	num, _ := strconv.ParseFloat(strings.Split(string(res), " ")[0], 16)
 

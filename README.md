@@ -25,6 +25,10 @@
 6. ```./runserver.sh```
 
 # Error codes
-NO REQUESTS | NO COIN | LA > 5 | MAINT. MODE
---- | --- | --- | ---
--1 | -2 | -3 | -4
+Err value | Error code | Meaning
+--- | --- | ---
+-1 | NO_REQUESTS | Rig has not sent requests since last time some amount of time
+-2 | NO_COIN | Rig has unsupported coin
+-3 | ALGT5 | Average Load > 5
+-4 | MAINT_MODE | Maintenance mode turned on
+-5 | MINER_TURNED_OFF | miner off
