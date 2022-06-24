@@ -18,9 +18,9 @@ import (
 const (
 	CONFIG_HOST = "http://jethash.io/newconfig.json"
 
-	RIG_CONFIG_PATH         = "rig.conf"
-	WALLET_CONFIG_PATH      = "conf"
-	WALLET_CONFIG_PATH_COPY = "walletcopy.conf"
+	RIG_CONFIG_PATH         = "/hive-config/rig.conf"
+	WALLET_CONFIG_PATH      = "/hive-config/wallet.conf"
+	WALLET_CONFIG_PATH_COPY = "/hive-config/walletcopy.conf"
 )
 
 const ( // (-1) NO_REQUESTS occurs on server
@@ -59,7 +59,7 @@ func main() {
 	wallets := getWallets(walletConfig)
 
 	errCode := getStartupProblem(config, walletConfig, rigConfig)
-	fmt.Println(errCode)
+
 	if errCode != 0 {
 		sendRigError(config.ServerIp, rigId, farmId, errCode)
 		return
@@ -300,7 +300,7 @@ func maintenanceModeTurnedOn(rigConf []byte) bool {
 
 func minerTurnedOff(rigConf []byte) bool {
 	res, _ := exec.Command("screen", "-ls").Output()
-	return regexp.MustCompile("\\d+.*\\.miner").Match(res)
+	return !regexp.MustCompile("\\d+.*\\.miner").Match(res)
 }
 
 func sendRigError(
