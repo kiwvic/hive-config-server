@@ -23,3 +23,8 @@
 4. Init database
 5. ```chmod +x runserver.sh```
 6. ```./runserver.sh```
+
+# Error codes
+NO REQUESTS | NO COIN | LA > 5 | MAINT. MODE
+--- | --- | --- | ---
+-1 | -2 | -3 | -4

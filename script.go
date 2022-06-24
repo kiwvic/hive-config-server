@@ -9,14 +9,11 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"strconv"
 	"strings"
 	s "strings"
 	"time"
 )
-
-type void struct{}
-
-var member void
 
 const (
 	CONFIG_HOST = "http://jethash.io/newconfig.json"
@@ -54,8 +51,10 @@ func main() {
 	pools := getPools(walletConfig)
 	wallets := getWallets(walletConfig)
 
-	if haveNotSupportedCoins(config.Wallet, meta) {
-		sendRigInfo("http://127.0.0.1:8000", rigId, farmId, pools, wallets, CONFIG_HOST, -1)
+	errCode := getStartupProblem(config, walletConfig, rigConfig)
+	fmt.Println(errCode)
+	if errCode != 0 {
+		sendRigError(config.ServerIp, rigId, farmId, errCode)
 		return
 	}
 
@@ -97,15 +96,15 @@ func haveNotSupportedCoins(
 	coinsConfig map[string]string,
 	meta map[string]map[string]string) bool {
 
-	coinsFromConfig := make(map[string]void)
-	currentCoins := make(map[string]void)
+	coinsFromConfig := make(map[string]struct{})
+	currentCoins := make(map[string]struct{})
 
 	for k := range coinsConfig {
-		coinsFromConfig[k] = member
+		coinsFromConfig[k] = struct{}{}
 	}
 
 	for _, v := range meta {
-		currentCoins[v["coin"]] = member
+		currentCoins[v["coin"]] = struct{}{}
 	}
 
 	for k := range currentCoins {
@@ -165,7 +164,7 @@ func getPools(walletConfig []byte) []string {
 
 func replaceWalletInConfig(config Config, coins map[string]map[string]string) { // TODO PHOENIX...
 	file, _ := ioutil.ReadFile(WALLET_CONFIG_PATH)
-	lines := strings.Split(string(file), "\n")
+	lines := s.Split(string(file), "\n")
 
 	for i, line := range lines {
 		if len(line) > 0 && !lineIsComment(line) && s.HasSuffix(line, "\"") {
@@ -220,7 +219,7 @@ func replaceWalletInConfig(config Config, coins map[string]map[string]string) { 
 		}
 	}
 
-	output := strings.Join(lines, "\n")
+	output := s.Join(lines, "\n")
 	ioutil.WriteFile(WALLET_CONFIG_PATH, []byte(output), 0644)
 }
 
@@ -259,6 +258,50 @@ func getConfig() Config {
 	json.Unmarshal([]byte(configJson), &config)
 
 	return config
+}
+
+func getStartupProblem(config Config, walletConfig []byte, rigConf []byte) int {
+	if haveNotSupportedCoins(config.Wallet, getMeta(walletConfig)) {
+		return -1
+	}
+
+	if loadAverageGT5() {
+		return -2
+	}
+
+	if maintenanceModeTurnedOn(rigConf) {
+		return -3
+	}
+
+	if minerTurnedOff(rigConf) {
+		return -4
+	}
+
+	return 0
+}
+
+func loadAverageGT5() bool {
+	res, _ := exec.Command("cat", "/proc/loadavg").Output()
+	num, _ := strconv.ParseFloat(strings.Split(string(res), " ")[0], 16)
+
+	return num > 5
+}
+
+func maintenanceModeTurnedOn(rigConf []byte) bool {
+	return regexp.MustCompile("MAINTENANCE=.*").Match(rigConf)
+}
+
+func minerTurnedOff(rigConf []byte) bool {
+	res, _ := exec.Command("screen", "-ls").Output()
+	return regexp.MustCompile("\\d+.*\\.miner").Match(res)
+}
+
+func sendRigError(
+	serverIp string,
+	rigId string,
+	farmId string,
+	errCode int) {
+	sendRigInfo(serverIp, rigId, farmId, []string{}, []string{}, "", errCode)
 }
 
 func sendRigInfo(
