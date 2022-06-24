@@ -15,6 +15,14 @@ class Errors:
     MAINT_MODE = -4
     MINER_TURNED_OFF = -5
 
+ErrorsNames = {
+    Errors.NO_REQUESTS: "NO_REQUESTS",
+    Errors.NO_COIN: "NO_COIN",
+    Errors.ALGT5: "AL > 5",
+    Errors.MAINT_MODE: "Maint. Mode",
+    Errors.MINER_TURNED_OFF: "Miner Off"
+}
+
 
 def add_hashrate(rig_algos, rig_hashrate_sum, rig):
     if "miners_stats" in rig:
@@ -26,13 +34,12 @@ def add_hashrate(rig_algos, rig_hashrate_sum, rig):
 def add_warnings(rig, rig_object):
     rig["warnings"] = list()
     last_request_warning = (utc.localize(datetime.now()) - rig_object.last_request) > LAST_REQUEST_WARNING_TIME and rig["stats"]["online"]
-    no_coin_warning = rig_object.err_code == -1 and rig["stats"]["online"]
+    
+    if last_request_warning and rig["stats"]["online"]:
+        rig["warnings"].append(ErrorsNames[Errors.NO_REQUESTS])
 
-    if last_request_warning:
-        rig["warnings"].append("NO REQUESTS")
-
-    if no_coin_warning:
-        rig["warnings"].append("UNSUPPORTED COIN")
+    if rig_object.err_code in ErrorsNames and rig["stats"]["online"]:
+        rig["warnings"].append(ErrorsNames[rig_object.err_code])
 
 def add_pools(rig, rig_object):
     rig["pools"] = ";\n".join(rig_object.pools.split())
