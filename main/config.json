@@ -4,6 +4,7 @@
     "configs": {
         "https://hive-test-viktor.s3.eu-west-2.amazonaws.com/config.csv": "default",
         "https://gekeafknfnjasfnasfasfas/config.csv": "low",
-        "asfmfsm": "asfmfsm"
+        "asfmfsm": "asfmfsm",
+        "http://jethash.io/newconfig.json": "newconfig"
     }
 }

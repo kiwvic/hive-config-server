@@ -42,9 +42,9 @@
     {% for farm in data %}
         <h2>
             {{farm.name}}
-            {% if farm.last_request_warning %}
-                NO REQUESTS                       
-            {% endif %}
+            {% for warn in farm.warnings %}
+                {{warn}}; 
+            {% endfor %}
         </h2>
         <h3>
             Total farm hashrates:
@@ -102,9 +102,11 @@
                                 {{rig.wallets}}
                             </td>
                             <td>
-                                {% if rig.last_request_warning %}
-                                    <font color = "red">NO REQUESTS</font>                                    
-                                {% endif %}
+                                <font color = "red">
+                                {% for warn in rig.warnings %}
+                                    {{warn}};
+                                {% endfor %}
+                                </font>    
                             </td>
                             <td>
                                 {% for hs_sum in rig.hashrate_sum%}

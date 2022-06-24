@@ -15,26 +15,29 @@ REMOVE_FROM_TABLE_TIME = timedelta(minutes=__CONFIG_FILE["remove_from_table_time
 
 def index(req):
     if req.method == "POST":
-        farm_id, rig_id, pools, wallets, config_url = req.body.decode("utf-8").split(",")
+        res = json.loads(req.body)
+        print(res)
 
-        if not sender_is_rig(req, int(farm_id)):
+        if not sender_is_rig(req, int(res["FarmId"])):
             return HttpResponse(status=404)
 
-        farm_object, _ = Farm.objects.get_or_create(id=int(farm_id))
+        farm_object, _ = Farm.objects.get_or_create(id=res["FarmId"])
         
         try:
-            rig_obj = Rig.objects.get(id=int(rig_id))
+            rig_obj = Rig.objects.get(id=int(res["RigId"]))
             rig_obj.last_request = datetime.now()
-            rig_obj.pools = pools
-            rig_obj.wallets = wallets
-            rig_obj.config_url = config_url
+            rig_obj.pools = " ".join(res["Pools"])
+            rig_obj.wallets = " ".join(res["Wallets"])
+            rig_obj.config_url = res["ConfigUrl"]
+            rig_obj.err_code = res["ErrCode"]
         except:
             rig_obj = Rig.objects.create(
-                id=int(rig_id), 
+                id=int(res["RigId"]), 
                 farm_id=farm_object, 
-                pools=pools,
-                wallets=wallets,
-                config_url=config_url,
+                pools=" ".join(res["Pools"]),
+                wallets=" ".join(res["Wallets"]),
+                config_url=res["ConfigUrl"],
+                err_code=res["ErrCode"],
                 last_request=datetime.now()
             )
         rig_obj.save()
@@ -50,6 +53,8 @@ def index(req):
 
         all_hashrates = dict()
         for farm in farms_data["data"]:
+            farm["warnings"] = list()
+            
             if "hashrates" in farm:
                 for h in farm["hashrates"]:
                     if h["algo"] in all_hashrates:
@@ -79,18 +84,32 @@ def index(req):
 
                 # warning if rig did not make requests in LAST_REQUEST_WARNING_TIME
                 rig["last_request"] = rig_object.last_request
-                rig["last_request_warning"] = (utc.localize(datetime.now()) - rig_object.last_request) > LAST_REQUEST_WARNING_TIME and rig["stats"]["online"]
+
+                rig["warnings"] = list()
+                # rig["last_request_warning"] = (utc.localize(datetime.now()) - rig_object.last_request) > LAST_REQUEST_WARNING_TIME and rig["stats"]["online"]
+                last_request_warning = (utc.localize(datetime.now()) - rig_object.last_request) > LAST_REQUEST_WARNING_TIME and rig["stats"]["online"]
+                no_coin_warning = rig_object.err_code == -1 and rig["stats"]["online"]
+
+                if last_request_warning:
+                    rig["warnings"].append("NO REQUESTS")
+
+                if no_coin_warning:
+                    rig["warnings"].append("UNSUPPORTED COIN")    
+
+                for w in rig["warnings"]:
+                    if w not in farm["warnings"]:
+                        farm["warnings"].append(w)
 
                 rig["pools"] = ";\n".join(rig_object.pools.split())
 
                 rig["wallets"] = ";\n".join(rig_object.wallets.split())
 
-                # will display text after farm name if last_request_warning
-                if rig["last_request_warning"] and "last_request_warning" in farm:
-                    if not farm["last_request_warning"]:
-                        farm["last_request_warning"] = True
-                else:
-                    farm["last_request_warning"] = rig["last_request_warning"]
+                # # will display text after farm name if last_request_warning
+                # if rig["last_request_warning"] and "last_request_warning" in farm:
+                #     if not farm["last_request_warning"]:
+                #         farm["last_request_warning"] = True
+                # else:
+                #     farm["last_request_warning"] = rig["last_request_warning"]
                 
                 rig["config_type"] = __CONFIG_FILE["configs"][rig_object.config_url]
         
