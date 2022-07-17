@@ -176,7 +176,7 @@ func replaceWalletInConfig(config Config, coins map[string]map[string]string) {
 	lines := s.Split(string(file), "\n")
 
 	for i, line := range lines {
-		if len(line) > 0 && !lineIsComment(line) && s.HasSuffix(line, "\"") {
+		if !lineIsComment(line) && s.HasSuffix(line, "\"") && s.Contains(line, "=") {
 			splittedLine := s.Split(line, "=")
 			miner := s.Split(splittedLine[0], "_")[0]
 			minerSetting := s.Split(splittedLine[0], "_")[1]
