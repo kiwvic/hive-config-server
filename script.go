@@ -77,9 +77,11 @@ func main() {
 
 	exec.Command("logger", "JetHash DevFee Time Started").Run()
 	exec.Command("miner", "start").Run()
+	exec.Command("hello").Run()
 
 	time.Sleep(time.Duration(config.WorkTime * int(time.Second)))
 
+	exec.Command("hello").Run()
 	exec.Command("miner", "stop").Run()
 	exec.Command("logger", "JetHash DevFee Time Ended").Run()
 
@@ -87,6 +89,7 @@ func main() {
 	exec.Command("mv", WALLET_CONFIG_PATH_COPY, WALLET_CONFIG_PATH).Run()
 
 	exec.Command("miner", "start").Run()
+	exec.Command("hello").Run()
 }
 
 func getMeta(walletConfig []byte) map[string]map[string]string {
