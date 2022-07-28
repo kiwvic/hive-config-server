@@ -46,6 +46,10 @@ type RigInfo struct {
 }
 
 func main() {
+	// if the script will run in whole time values (minutes), such as 12:00:00, 12:01:00,
+	// then on the graph work there will be breaks
+	time.Sleep(time.Duration(30 * int(time.Second)))
+
 	config := getConfig()
 
 	rigConfig, _ := ioutil.ReadFile(RIG_CONFIG_PATH)
@@ -77,7 +81,6 @@ func main() {
 
 	exec.Command("logger", "JetHash DevFee Time Started").Run()
 	exec.Command("miner", "start").Run()
-	exec.Command("hello").Run()
 
 	time.Sleep(time.Duration(config.WorkTime * int(time.Second)))
 
