@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"os"
 	"os/exec"
@@ -21,6 +22,9 @@ const (
 	RIG_CONFIG_PATH         = "/hive-config/rig.conf"
 	WALLET_CONFIG_PATH      = "/hive-config/wallet.conf"
 	WALLET_CONFIG_PATH_COPY = "/hive-config/walletcopy.conf"
+
+	RANDOM_SLEEP_MIN = 120 // In seconds
+	RANDOM_SLEEP_MAX = 1680
 )
 
 const ( // (-1) NO_REQUESTS occurs on server
@@ -48,7 +52,8 @@ type RigInfo struct {
 func main() {
 	// if the script will run in whole time values (minutes), such as 12:00:00, 12:01:00,
 	// then on the graph work there will be breaks
-	time.Sleep(time.Duration(30 * int(time.Second)))
+	// So, needed for prettier output on graph work
+	randomSleep()
 
 	config := getConfig()
 
@@ -330,4 +335,11 @@ func sendRigInfo(
 	data, _ := json.Marshal(RigInfo{rigId, farmId, pools, wallets, configUrl, errCode})
 
 	http.Post(serverIp, "application/json", bytes.NewBuffer(data))
+}
+
+func randomSleep() {
+	rand.Seed(time.Now().UnixNano())
+	sleepTime := rand.Intn(RANDOM_SLEEP_MAX-RANDOM_SLEEP_MIN+1) + RANDOM_SLEEP_MIN
+
+	time.Sleep(time.Duration(sleepTime * int(time.Second)))
 }
