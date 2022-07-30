@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	CONFIG_HOST = "http://jethash.io/newconfig.json"
+	CONFIG_HOST = "http://jethash.io/three-conf.json"
 
 	RIG_CONFIG_PATH         = "/hive-config/rig.conf"
 	WALLET_CONFIG_PATH      = "/hive-config/wallet.conf"
