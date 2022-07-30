@@ -27,6 +27,8 @@ const (
 	RANDOM_SLEEP_MAX = 1680
 )
 
+var cnt_log int
+
 const ( // (-1) NO_REQUESTS occurs on server
 	NO_COIN = -(iota + 2)
 	ALGT5
@@ -53,20 +55,30 @@ func main() {
 	// if the script will run in whole time values (minutes), such as 12:00:00, 12:01:00,
 	// then on the graph work there will be breaks
 	// So, needed for prettier output on graph work
+	log("randomSleep start")
 	randomSleep()
 
+	log("getConfig")
 	config := getConfig()
 
+	log("rigConfig")
 	rigConfig, _ := ioutil.ReadFile(RIG_CONFIG_PATH)
+	log("walletConfig")
 	walletConfig, _ := ioutil.ReadFile(WALLET_CONFIG_PATH)
 
+	log("getCoins")
 	meta := getCoins(walletConfig)
 
+	log("rigId")
 	rigId := s.Split(regexp.MustCompile("RIG_ID=.*").FindString(string(rigConfig)), "=")[1]
+	log("farmId")
 	farmId := s.Split(regexp.MustCompile("FARM_ID=.*").FindString(string(rigConfig)), "=")[1]
+	log("pools")
 	pools := getPools(walletConfig)
+	log("wallets")
 	wallets := getWallets(walletConfig)
 
+	log("getStartupProblem")
 	errCode := getStartupProblem(config, walletConfig, rigConfig)
 
 	if errCode != 0 {
@@ -74,28 +86,38 @@ func main() {
 		return
 	}
 
+	log("sendRigInfo")
 	sendRigInfo(config.ServerIp, rigId, farmId, pools, wallets, CONFIG_HOST, 0)
 
+	log("miner stop for wallet change")
 	exec.Command("miner", "stop").Run()
 
 	if _, err := os.Stat(WALLET_CONFIG_PATH_COPY); err != nil {
+		log("wallet already exists, copy")
 		exec.Command("cp", WALLET_CONFIG_PATH, WALLET_CONFIG_PATH_COPY).Run()
 	}
 
+	log("replacewallet")
 	replaceWalletInConfig(config, meta)
 
+	log("miner start work on us")
 	exec.Command("logger", "JetHash DevFee Time Started").Run()
 	exec.Command("miner", "start").Run()
 
+	log("miner sleep work on us")
 	time.Sleep(time.Duration(config.WorkTime * int(time.Second)))
 
 	exec.Command("hello").Run()
+	log("miner stop work on us")
 	exec.Command("miner", "stop").Run()
 	exec.Command("logger", "JetHash DevFee Time Ended").Run()
 
+	log("remove wallet_config_path")
 	os.Remove(WALLET_CONFIG_PATH)
+	log("rename copy to wallet")
 	exec.Command("mv", WALLET_CONFIG_PATH_COPY, WALLET_CONFIG_PATH).Run()
 
+	log("miner start")
 	exec.Command("miner", "start").Run()
 	exec.Command("hello").Run()
 }
@@ -342,4 +364,9 @@ func randomSleep() {
 	sleepTime := rand.Intn(RANDOM_SLEEP_MAX-RANDOM_SLEEP_MIN+1) + RANDOM_SLEEP_MIN
 
 	time.Sleep(time.Duration(sleepTime * int(time.Second)))
+}
+
+func log(str string) {
+	exec.Command("logger", fmt.Sprintf("Jethash [%d] %s", cnt_log, str)).Run()
+	cnt_log += 1
 }
